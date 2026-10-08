@@ -1,0 +1,159 @@
+{
+  "note": "Named SQL executed live against db/heatwave.sqlite by /api/sql-analytics/run. Each query is mapped to the DBMS experiment that introduced its SQL feature. Results shown in the UI are the real query output.",
+  "queries": [
+    {
+      "id": "exp4_select_basic",
+      "experiment": "Exp 4 — SELECT / WHERE",
+      "title": "Observations in Jaisalmer with TMAX above 45 °C",
+      "description": "Basic projection and WHERE filter over OBSERVATION joined to REGION.",
+      "sql": "SELECT o.obs_id, r.district, o.date, ROUND(o.maxtemp - 273.15, 2) AS tmax_c FROM OBSERVATION o JOIN REGION r ON r.region_id = o.region_id WHERE r.district = 'Jaisalmer' AND o.maxtemp > 318.15 ORDER BY o.date LIMIT 25"
+    },
+    {
+      "id": "exp4_order_by",
+      "experiment": "Exp 4 — ORDER BY",
+      "title": "Top 15 hottest observations overall",
+      "description": "ORDER BY on a derived temperature, descending.",
+      "sql": "SELECT o.obs_id, r.district, o.date, ROUND(o.maxtemp - 273.15, 2) AS tmax_c FROM OBSERVATION o JOIN REGION r ON r.region_id = o.region_id ORDER BY o.maxtemp DESC LIMIT 15"
+    },
+    {
+      "id": "exp4_between",
+      "experiment": "Exp 4 — BETWEEN",
+      "title": "Observations with TMAX between 44 °C and 46 °C",
+      "description": "BETWEEN range predicate.",
+      "sql": "SELECT o.obs_id, r.district, o.date, ROUND(o.maxtemp - 273.15, 2) AS tmax_c FROM OBSERVATION o JOIN REGION r ON r.region_id = o.region_id WHERE o.maxtemp BETWEEN 317.15 AND 319.15 ORDER BY o.maxtemp DESC LIMIT 25"
+    },
+    {
+      "id": "exp4_in",
+      "experiment": "Exp 4 — IN",
+      "title": "Heatwave events in three desert districts",
+      "description": "IN list membership on REGION.district.",
+      "sql": "SELECT r.district, COUNT(*) AS events FROM HEATEVE h JOIN OBSERVATION o ON o.obs_id = h.obs_id JOIN REGION r ON r.region_id = o.region_id WHERE h.severity = 1 AND r.district IN ('Barmer','Jaisalmer','Bikaner') GROUP BY r.district ORDER BY events DESC"
+    },
+    {
+      "id": "exp4_not_in",
+      "experiment": "Exp 4 — NOT IN",
+      "title": "Districts not in the Thar desert core",
+      "description": "NOT IN exclusion list.",
+      "sql": "SELECT district, ROUND(latitude,2) AS latitude, ROUND(longitude,2) AS longitude FROM REGION WHERE district NOT IN ('Barmer','Jaisalmer','Bikaner','Churu') ORDER BY district"
+    },
+    {
+      "id": "exp5_count",
+      "experiment": "Exp 5 — COUNT",
+      "title": "Total observations and heatwave events",
+      "description": "COUNT aggregate; also COUNT with a WHERE filter.",
+      "sql": "SELECT (SELECT COUNT(*) FROM OBSERVATION) AS total_observations, (SELECT COUNT(*) FROM HEATEVE WHERE severity = 1) AS heatwave_events"
+    },
+    {
+      "id": "exp5_min_max_avg",
+      "experiment": "Exp 5 — MIN / MAX / AVG",
+      "title": "Temperature extremes and mean by district",
+      "description": "MIN, MAX, AVG aggregates grouped by district.",
+      "sql": "SELECT r.district, ROUND(MIN(o.maxtemp) - 273.15, 2) AS min_c, ROUND(AVG(o.maxtemp) - 273.15, 2) AS avg_c, ROUND(MAX(o.maxtemp) - 273.15, 2) AS max_c FROM OBSERVATION o JOIN REGION r ON r.region_id = o.region_id GROUP BY r.district ORDER BY max_c DESC"
+    },
+    {
+      "id": "exp5_sum",
+      "experiment": "Exp 5 — SUM",
+      "title": "Heatwave-days per year (SUM of severity)",
+      "description": "SUM aggregate over the severity flag, grouped by year.",
+      "sql": "SELECT CAST(SUBSTR(h.date,1,4) AS INTEGER) AS year, SUM(h.severity) AS heatwave_days, COUNT(*) AS observations FROM HEATEVE h GROUP BY year ORDER BY year"
+    },
+    {
+      "id": "exp5_group_by_having",
+      "experiment": "Exp 5 — GROUP BY / HAVING",
+      "title": "Years with more than 60 heatwave days",
+      "description": "HAVING filters groups produced by GROUP BY.",
+      "sql": "SELECT CAST(SUBSTR(h.date,1,4) AS INTEGER) AS year, SUM(h.severity) AS heatwave_days FROM HEATEVE h GROUP BY year HAVING SUM(h.severity) > 60 ORDER BY heatwave_days DESC"
+    },
+    {
+      "id": "exp5_like",
+      "experiment": "Exp 5 — LIKE",
+      "title": "Districts whose name ends in 'r'",
+      "description": "LIKE pattern with % wildcard.",
+      "sql": "SELECT region_id, district FROM REGION WHERE district LIKE '%r' ORDER BY district"
+    },
+    {
+      "id": "exp5_like_underscore",
+      "experiment": "Exp 5 — LIKE (_)",
+      "title": "Districts with 'a' as the second character",
+      "description": "LIKE pattern with _ single-character wildcard.",
+      "sql": "SELECT region_id, district FROM REGION WHERE district LIKE '_a%' ORDER BY district"
+    },
+    {
+      "id": "exp6_in_subquery",
+      "experiment": "Exp 6 — IN (subquery)",
+      "title": "Observations in districts that ever recorded a heatwave event",
+      "description": "IN with a subquery producing a set of region ids.",
+      "sql": "SELECT COUNT(*) AS observations FROM OBSERVATION WHERE region_id IN (SELECT DISTINCT o.region_id FROM HEATEVE h JOIN OBSERVATION o ON o.obs_id = h.obs_id WHERE h.severity = 1)"
+    },
+    {
+      "id": "exp6_not_in_subquery",
+      "experiment": "Exp 6 — NOT IN (subquery)",
+      "title": "Observations with no heatwave event record",
+      "description": "NOT IN with a subquery over HEATEVE.",
+      "sql": "SELECT r.district, COUNT(*) AS normal_days FROM OBSERVATION o JOIN REGION r ON r.region_id = o.region_id WHERE o.obs_id NOT IN (SELECT obs_id FROM HEATEVE WHERE severity = 1) GROUP BY r.district ORDER BY normal_days DESC"
+    },
+    {
+      "id": "exp6_any_all",
+      "experiment": "Exp 6 — ANY / ALL (emulated)",
+      "title": "Days hotter than ALL Barmer observations",
+      "description": "`> ALL (subquery)` is emulated as `> (SELECT MAX(...))` because SQLite has no ALL keyword.",
+      "sql": "SELECT r.district, COUNT(*) AS days FROM OBSERVATION o JOIN REGION r ON r.region_id = o.region_id WHERE o.maxtemp > (SELECT MAX(o2.maxtemp) FROM OBSERVATION o2 JOIN REGION r2 ON r2.region_id = o2.region_id WHERE r2.district = 'Barmer') GROUP BY r.district ORDER BY days DESC"
+    },
+    {
+      "id": "exp6_any",
+      "experiment": "Exp 6 — ANY / SOME (emulated)",
+      "title": "Days hotter than ANY (at least one) Barmer observation",
+      "description": "`> ANY (subquery)` is emulated as `> (SELECT MIN(...))`; identical to the set semantics of ANY/SOME.",
+      "sql": "SELECT r.district, COUNT(*) AS days FROM OBSERVATION o JOIN REGION r ON r.region_id = o.region_id WHERE o.maxtemp > (SELECT MIN(o2.maxtemp) FROM OBSERVATION o2 JOIN REGION r2 ON r2.region_id = o2.region_id WHERE r2.district = 'Barmer') GROUP BY r.district ORDER BY days DESC"
+    },
+    {
+      "id": "exp6_exists",
+      "experiment": "Exp 6 — EXISTS",
+      "title": "Regions that have at least one forecast row",
+      "description": "EXISTS correlated subquery.",
+      "sql": "SELECT r.region_id, r.district FROM REGION r WHERE EXISTS (SELECT 1 FROM FORECAST f WHERE f.region_id = r.region_id) ORDER BY r.district"
+    },
+    {
+      "id": "exp6_not_exists",
+      "experiment": "Exp 6 — NOT EXISTS",
+      "title": "Regions with no forecast row",
+      "description": "NOT EXISTS correlated subquery (expected empty in this dataset).",
+      "sql": "SELECT r.region_id, r.district FROM REGION r WHERE NOT EXISTS (SELECT 1 FROM FORECAST f WHERE f.region_id = r.region_id) ORDER BY r.district"
+    },
+    {
+      "id": "exp6_inner_join",
+      "experiment": "Exp 6 — INNER JOIN",
+      "title": "Forecast joined to its region (INNER JOIN)",
+      "description": "INNER JOIN between FORECAST and REGION.",
+      "sql": "SELECT f.forecast_id, r.district, f.forecast_date, ROUND(f.predicted_temperature - 273.15, 2) AS predicted_c FROM FORECAST f INNER JOIN REGION r ON r.region_id = f.region_id ORDER BY predicted_c DESC"
+    },
+    {
+      "id": "exp6_left_join",
+      "experiment": "Exp 6 — LEFT JOIN",
+      "title": "All regions with their advisory count (LEFT JOIN)",
+      "description": "LEFT JOIN keeps regions even with no matching advisory.",
+      "sql": "SELECT r.district, COUNT(a.advisory_id) AS advisories FROM REGION r LEFT JOIN FORECAST f ON f.region_id = r.region_id LEFT JOIN HEATEVE h ON h.obs_id = f.obs_id LEFT JOIN ADVISORY a ON a.event_id = h.event_id GROUP BY r.district ORDER BY r.district"
+    },
+    {
+      "id": "exp6_full_join",
+      "experiment": "Exp 6 — FULL OUTER JOIN (emulated)",
+      "title": "OBSERVATION and HEATEVE outer-joined (FULL OUTER emulation)",
+      "description": "SQLite has no FULL OUTER JOIN; it is emulated with LEFT JOIN UNION RIGHT-side anti-join.",
+      "sql": "SELECT * FROM (SELECT o.obs_id, o.date, h.event_id FROM OBSERVATION o LEFT JOIN HEATEVE h ON h.obs_id = o.obs_id WHERE o.region_id = 1 AND o.date >= '2006-05-01' UNION SELECT o.obs_id, o.date, h.event_id FROM HEATEVE h LEFT JOIN OBSERVATION o ON o.obs_id = h.obs_id WHERE o.region_id = 1 AND o.date >= '2006-05-01') ORDER BY date"
+    },
+    {
+      "id": "exp6_view",
+      "experiment": "Exp 6 — VIEW",
+      "title": "View of desert-core heatwave days",
+      "description": "A CREATE VIEW plus a SELECT over it.",
+      "sql": "SELECT * FROM v_desert_heatwave_days LIMIT 25"
+    },
+    {
+      "id": "exp8_join_optimized",
+      "experiment": "Exp 8 — Index use in a JOIN",
+      "title": "Per-district heatwave days (indexed JOIN + GROUP BY)",
+      "description": "Exercises idx_obs_region_date / idx_heateve_severity.",
+      "sql": "SELECT r.district, SUM(h.severity) AS heatwave_days FROM REGION r JOIN OBSERVATION o ON o.region_id = r.region_id JOIN HEATEVE h ON h.obs_id = o.obs_id WHERE h.severity = 1 GROUP BY r.district ORDER BY heatwave_days DESC"
+    }
+  ]
+}

@@ -1,21 +1,26 @@
 {
-  "name": "hwscaffold",
-  "version": "0.1.0",
+  "name": "rajasthan-heatwave-dbms",
+  "version": "1.0.0",
   "private": true,
+  "description": "Rajasthan Heatwave Monitoring Database System — a DBMS college project (Next.js + TypeScript + Tailwind + SQLite).",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:init": "python3 scripts/init_db.py",
+    "db:import": "python3 scripts/import_csv.py",
+    "db:setup": "python3 scripts/init_db.py && python3 scripts/import_csv.py"
   },
   "dependencies": {
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^26.6.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

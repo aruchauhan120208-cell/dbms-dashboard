@@ -1,69 +1,74 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useApi, fmt, fmtInt } from '@/lib/useApi';
+import { KpiCard, Card } from '@/components/KpiCard';
+import { PageHeader, Grid } from '@/components/Page';
+import { Loading, ErrorState } from '@/components/States';
+import { BarSeries, BRAND } from '@/components/Charts';
+
+type Overview = {
+  observations: number; districts: number; years: number;
+  firstDate: string; lastDate: string; heatwaveEvents: number;
+  avgTmaxC: number; maxTmaxC: number; minTmaxC: number;
+  forecasts: number; advisories: number; stakeholders: number;
+  thresholdC: number; thresholdK: number;
+  hottest: { district: string; date: string; tmaxC: number };
+};
+
+export default function OverviewPage() {
+  const { data, loading, error } = useApi<Overview>('/api/overview');
+  const hw = useApi<{ byYear: { year: number; heatwave_days: number }[] }>('/api/heatwave');
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <>
+      <PageHeader title="Overview">
+        Headline figures for the Rajasthan heatwave dataset, computed directly from SQLite. A heatwave day
+        is TMAX ≥ {data ? fmt(data.thresholdC) : '—'} °C, the threshold derived from the dataset&apos;s own flag.
+      </PageHeader>
+
+      {loading ? <Loading /> : null}
+      {error ? <ErrorState message={error} /> : null}
+
+      {data ? (
+        <>
+          <Grid cols={4}>
+            <KpiCard label="Observations" value={fmtInt(data.observations)} hint="OBSERVATION rows" />
+            <KpiCard label="Districts" value={fmtInt(data.districts)} hint="REGION rows" />
+            <KpiCard label="Period" value={`${data.years} yrs`} hint={`${data.firstDate} → ${data.lastDate}`} />
+            <KpiCard label="Heatwave days" value={fmtInt(data.heatwaveEvents)} hint="HEATEVE severity = 1" />
+          </Grid>
+
+          <div className="mt-4">
+            <Grid cols={4}>
+              <KpiCard label="Average TMAX" value={fmt(data.avgTmaxC)} unit="°C" />
+              <KpiCard label="Record high" value={fmt(data.maxTmaxC)} unit="°C" hint={`${data.hottest.district}, ${data.hottest.date}`} />
+              <KpiCard label="Lowest TMAX" value={fmt(data.minTmaxC)} unit="°C" />
+              <KpiCard label="Active advisories" value={fmtInt(data.advisories)} hint={`${fmtInt(data.forecasts)} forecast rows`} />
+            </Grid>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card title="Heatwave days per year" subtitle="SUM(severity) grouped by year — from HEATEVE">
+              {hw.loading ? <Loading /> : hw.error ? <ErrorState message={hw.error} /> : (
+                <BarSeries
+                  data={hw.data!.byYear}
+                  xKey="year"
+                  series={[{ key: 'heatwave_days', name: 'Heatwave days', color: BRAND }]}
+                />
+              )}
+            </Card>
+            <Card title="About this system">
+              <ul className="space-y-2 text-sm text-slate-700">
+                <li>• <strong>Architecture:</strong> Frontend → API routes → SQLite. Live weather: Frontend → API route → OpenWeather → API route → Frontend.</li>
+                <li>• <strong>Schema:</strong> the eight Experiment-2 relations (SOURCE, REGION, OBSERVATION, FORECAST, HEATEVE, ADVISORY, STAKEHOLDER, ADVISORY_STAKEHOLDER).</li>
+                <li>• <strong>Data:</strong> {fmtInt(data.observations)} daily observations imported from the provided CSV.</li>
+                <li>• <strong>Forecasting:</strong> 7-day moving average of TMAX (demo method, not ML).</li>
+                <li>• <strong>Advisories:</strong> generated only when a forecast meets the heatwave threshold — currently {data.advisories}.</li>
+              </ul>
+            </Card>
+          </div>
+        </>
+      ) : null}
+    </>
   );
 }
