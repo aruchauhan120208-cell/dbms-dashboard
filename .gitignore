@@ -46,3 +46,4 @@ next-env.d.ts
 # generated SQLite database — committed on purpose: Vercel lambdas are
 # immutable, so the DB must ship in the bundle (scripts/ can regenerate it).
 !/db/heatwave.sqlite
+.env*
