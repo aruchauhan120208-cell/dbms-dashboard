@@ -43,8 +43,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# generated SQLite database (regenerate with scripts/init_db.py + import_csv.py)
-/db/*.sqlite
-/db/*.sqlite-journal
-/db/*.sqlite-wal
-/db/*.sqlite-shm
+# generated SQLite database — committed on purpose: Vercel lambdas are
+# immutable, so the DB must ship in the bundle (scripts/ can regenerate it).
+!/db/heatwave.sqlite

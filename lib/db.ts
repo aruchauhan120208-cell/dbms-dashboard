@@ -15,10 +15,13 @@ let _db: DatabaseSync | null = null;
 
 export function getDb(): DatabaseSync {
   if (_db) return _db;
-  const db = new DatabaseSync(DB_PATH);
+  // Opened read-only: every API route only SELECTs, and on serverless hosts
+  // (e.g. Vercel) the deployment filesystem is read-only except /tmp — a
+  // read-write open would fail trying to create -wal/-shm sidecars.
+  const db = new DatabaseSync(DB_PATH, { readOnly: true });
   db.exec('PRAGMA foreign_keys = ON');
   _db = db;
-  return db;
+  return _db;
 }
 
 export type Row = Record<string, unknown>;

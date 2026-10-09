@@ -2,6 +2,9 @@
   "name": "rajasthan-heatwave-dbms",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "description": "Rajasthan Heatwave Monitoring Database System — a DBMS college project (Next.js + TypeScript + Tailwind + SQLite).",
   "scripts": {
     "dev": "next dev",

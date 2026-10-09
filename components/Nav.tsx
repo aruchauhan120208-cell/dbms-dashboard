@@ -9,8 +9,6 @@ export const SECTIONS: { href: string; label: string }[] = [
   { href: '/heatwave', label: 'Heatwave Analysis' },
   { href: '/regions', label: 'Regional Analysis' },
   { href: '/forecasts', label: 'Forecasts' },
-  { href: '/advisories', label: 'Advisories' },
-  { href: '/stakeholders', label: 'Stakeholders' },
   { href: '/explorer', label: 'Data Explorer' },
   { href: '/sql', label: 'SQL Analytics' },
   { href: '/model', label: 'Database Model' },
