@@ -67,6 +67,7 @@ export default function SqlAnalyticsPage() {
                     <li key={q.id}>
                       <button
                         onClick={() => runQuery(q)}
+                        aria-pressed={selected?.id === q.id}
                         className={
                           'w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ' +
                           (selected?.id === q.id ? 'bg-[var(--brand)] text-white' : 'hover:bg-slate-100 text-slate-700')

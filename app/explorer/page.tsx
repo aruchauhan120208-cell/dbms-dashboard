@@ -139,14 +139,14 @@ export default function ExplorerPage() {
                   <button
                     disabled={offset === 0}
                     onClick={() => setOffset(Math.max(0, offset - PAGE))}
-                    className="rounded-md border border-[var(--border)] bg-white px-3 py-1 disabled:opacity-40"
+                    className="rounded-md border border-[var(--border)] bg-white px-3 py-1 text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-[var(--muted)]"
                   >
                     Previous
                   </button>
                   <button
                     disabled={offset + PAGE >= data.total}
                     onClick={() => setOffset(offset + PAGE)}
-                    className="rounded-md border border-[var(--border)] bg-white px-3 py-1 disabled:opacity-40"
+                    className="rounded-md border border-[var(--border)] bg-white px-3 py-1 text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-[var(--muted)]"
                   >
                     Next
                   </button>

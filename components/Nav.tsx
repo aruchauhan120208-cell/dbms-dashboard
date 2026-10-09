@@ -21,7 +21,7 @@ export const SECTIONS: { href: string; label: string }[] = [
 export default function Nav() {
   const pathname = usePathname();
   return (
-    <nav className="border-b border-[var(--border)] bg-[var(--card)]">
+    <nav aria-label="Primary" className="border-b border-[var(--border)] bg-[var(--card)]">
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex gap-1 overflow-x-auto scrollbar-thin py-1">
           {SECTIONS.map((s) => {
@@ -30,11 +30,13 @@ export default function Nav() {
               <Link
                 key={s.href}
                 href={s.href}
+                aria-current={active ? 'page' : undefined}
                 className={
-                  'whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ' +
+                  // Active state = 3 signals: aria-current + colour fill + weight bump.
+                  'tap-target whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors ' +
                   (active
-                    ? 'bg-[var(--brand)] text-white'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900')
+                    ? 'bg-[var(--brand)] font-semibold text-white'
+                    : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900')
                 }
               >
                 {s.label}

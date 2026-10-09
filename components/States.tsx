@@ -11,7 +11,7 @@ export function Loading({ label = 'Loading…' }: { label?: string }) {
 
 export function ErrorState({ message, hint }: { message: string; hint?: string }) {
   return (
-    <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+    <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
       <div className="font-semibold">Something went wrong</div>
       <div className="mt-1">{message}</div>
       {hint ? <div className="mt-1 text-red-700">{hint}</div> : null}
